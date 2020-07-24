@@ -20,6 +20,8 @@ func _() {
 	_ = x[Ed25519-2055]
 	_ = x[PKCS1WithSHA1-513]
 	_ = x[ECDSAWithSHA1-515]
+	_ = x[ECDSASecP256k1SHA256-xxx] //to xiexie
+	_ = x[SM2Sig_SM3-xxx] //todo xiexie
 }
 
 const (

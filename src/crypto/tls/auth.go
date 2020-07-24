@@ -54,6 +54,8 @@ func verifyHandshakeSignature(sigType uint8, pubkey crypto.PublicKey, hashFunc c
 		if err := rsa.VerifyPSS(pubKey, hashFunc, signed, sig, signOpts); err != nil {
 			return err
 		}
+	case SM3withSM2: //todo xiexie
+		return nil
 	default:
 		return errors.New("internal error: unknown signature type")
 	}
@@ -101,8 +103,10 @@ func typeAndHashFromSignatureScheme(signatureAlgorithm SignatureScheme) (sigType
 		sigType = signaturePKCS1v15
 	case PSSWithSHA256, PSSWithSHA384, PSSWithSHA512:
 		sigType = signatureRSAPSS
-	case ECDSAWithSHA1, ECDSAWithP256AndSHA256, ECDSAWithP384AndSHA384, ECDSAWithP521AndSHA512:
+	case ECDSAWithSHA1, ECDSAWithP256AndSHA256, ECDSAWithP384AndSHA384, ECDSAWithP521AndSHA512,ECDSASecP256k1SHA256:
 		sigType = signatureECDSA
+	case SM2Sig_SM3:
+		sigType = SM3withSM2
 	case Ed25519:
 		sigType = signatureEd25519
 	default:
@@ -111,12 +115,14 @@ func typeAndHashFromSignatureScheme(signatureAlgorithm SignatureScheme) (sigType
 	switch signatureAlgorithm {
 	case PKCS1WithSHA1, ECDSAWithSHA1:
 		hash = crypto.SHA1
-	case PKCS1WithSHA256, PSSWithSHA256, ECDSAWithP256AndSHA256:
+	case PKCS1WithSHA256, PSSWithSHA256, ECDSAWithP256AndSHA256,ECDSASecP256k1SHA256:
 		hash = crypto.SHA256
 	case PKCS1WithSHA384, PSSWithSHA384, ECDSAWithP384AndSHA384:
 		hash = crypto.SHA384
 	case PKCS1WithSHA512, PSSWithSHA512, ECDSAWithP521AndSHA512:
 		hash = crypto.SHA512
+	case SM2Sig_SM3:
+		hash = New() //todo xiexie
 	case Ed25519:
 		hash = directSigning
 	default:
@@ -178,7 +184,7 @@ func signatureSchemesForCertificate(version uint16, cert *Certificate) []Signatu
 	var sigAlgs []SignatureScheme
 	switch pub := priv.Public().(type) {
 	case *ecdsa.PublicKey:
-		if version != VersionTLS13 {
+		if version != VersionTLS13 && version != VersionOntTLS  {
 			// In TLS 1.2 and earlier, ECDSA algorithms are not
 			// constrained to a single curve.
 			sigAlgs = []SignatureScheme{
@@ -191,7 +197,7 @@ func signatureSchemesForCertificate(version uint16, cert *Certificate) []Signatu
 		}
 		switch pub.Curve {
 		case elliptic.P256():
-			sigAlgs = []SignatureScheme{ECDSAWithP256AndSHA256}
+			sigAlgs = []SignatureScheme{ECDSAWithP256AndSHA256,ECDSASecP256k1SHA256}
 		case elliptic.P384():
 			sigAlgs = []SignatureScheme{ECDSAWithP384AndSHA384}
 		case elliptic.P521():

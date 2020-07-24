@@ -914,6 +914,7 @@ func certificateRequestInfoFromMsg(vers uint16, certReq *certificateRequestMsg) 
 		case ecAvail:
 			cri.SignatureSchemes = []SignatureScheme{
 				ECDSAWithP256AndSHA256, ECDSAWithP384AndSHA384, ECDSAWithP521AndSHA512,
+				ECDSASecP256k1SHA256,
 			}
 		}
 		return cri

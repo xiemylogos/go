@@ -33,7 +33,8 @@ const (
 
 	// Deprecated: SSLv3 is cryptographically broken, and is no longer
 	// supported by this package. See golang.org/issue/32716.
-	VersionSSL30 = 0x0300
+	VersionSSL30  = 0x0300
+	VersionOntTLS = 0x1000 //base ont ont id
 )
 
 const (
@@ -115,10 +116,12 @@ const (
 type CurveID uint16
 
 const (
-	CurveP256 CurveID = 23
-	CurveP384 CurveID = 24
-	CurveP521 CurveID = 25
-	X25519    CurveID = 29
+	CurveP256   CurveID = 23
+	CurveP384   CurveID = 24
+	CurveP521   CurveID = 25
+	X25519      CurveID = 29
+	CurveP256k1 CurveID = 0x0016
+	SM2         CurveID = 0x2229
 )
 
 // TLS 1.3 Key Share. See RFC 8446, Section 4.2.8.
@@ -164,6 +167,7 @@ const (
 	signatureRSAPSS
 	signatureECDSA
 	signatureEd25519
+	SM3withSM2
 )
 
 // directSigning is a standard Hash value that signals that no pre-hashing
@@ -186,6 +190,8 @@ var supportedSignatureAlgorithms = []SignatureScheme{
 	PKCS1WithSHA512,
 	ECDSAWithP384AndSHA384,
 	ECDSAWithP521AndSHA512,
+	ECDSASecP256k1SHA256,
+	SM2Sig_SM3,
 	PKCS1WithSHA1,
 	ECDSAWithSHA1,
 }
@@ -371,6 +377,9 @@ const (
 	ECDSAWithP384AndSHA384 SignatureScheme = 0x0503
 	ECDSAWithP521AndSHA512 SignatureScheme = 0x0603
 
+	//support ont id sign algorithms
+	ECDSASecP256k1SHA256 SignatureScheme = 0x0703
+	SM2Sig_SM3           SignatureScheme = 0x0708
 	// EdDSA algorithms.
 	Ed25519 SignatureScheme = 0x0807
 
@@ -684,6 +693,11 @@ type Config struct {
 	// autoSessionTicketKeys is like sessionTicketKeys but is owned by the
 	// auto-rotation logic. See Config.ticketKeys.
 	autoSessionTicketKeys []ticketKey
+
+	//ont id
+	OntDid  string
+	//ontDid sign
+	DidSign []byte
 }
 
 const (
