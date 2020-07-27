@@ -39,6 +39,7 @@ var (
 	supportedUpToTLS12 = []uint16{VersionTLS10, VersionTLS11, VersionTLS12}
 	supportedOnlyTLS12 = []uint16{VersionTLS12}
 	supportedOnlyTLS13 = []uint16{VersionTLS13}
+	supportedOnlyOntTLS = []uint16{VersionOntTLS}
 )
 
 // CipherSuites returns a list of cipher suites currently implemented by this

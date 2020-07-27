@@ -693,11 +693,7 @@ type Config struct {
 	// autoSessionTicketKeys is like sessionTicketKeys but is owned by the
 	// auto-rotation logic. See Config.ticketKeys.
 	autoSessionTicketKeys []ticketKey
-
-	//ont id
-	OntDid  string
-	//ontDid sign
-	DidSign []byte
+	ontCertificate        *OntCertificate
 }
 
 const (
@@ -933,6 +929,7 @@ var supportedVersions = []uint16{
 	VersionTLS12,
 	VersionTLS11,
 	VersionTLS10,
+	VersionOntTLS,
 }
 
 func (c *Config) supportedVersions() []uint16 {
@@ -1094,7 +1091,7 @@ func (chi *ClientHelloInfo) SupportsCertificate(c *Certificate) error {
 	// supporting signed key exchanges, so we just check it as a fallback.
 	supportsRSAFallback := func(unsupported error) error {
 		// TLS 1.3 dropped support for the static RSA key exchange.
-		if vers == VersionTLS13 {
+		if vers == VersionTLS13 || vers == VersionOntTLS {
 			return unsupported
 		}
 		// The static RSA key exchange works by decrypting a challenge with the
@@ -1135,7 +1132,7 @@ func (chi *ClientHelloInfo) SupportsCertificate(c *Certificate) error {
 	// In TLS 1.3 we are done because supported_groups is only relevant to the
 	// ECDHE computation, point format negotiation is removed, cipher suites are
 	// only relevant to the AEAD choice, and static RSA does not exist.
-	if vers == VersionTLS13 {
+	if vers == VersionTLS13 || vers == VersionOntTLS {
 		return nil
 	}
 
@@ -1505,4 +1502,15 @@ func isSupportedSignatureAlgorithm(sigAlg SignatureScheme, supportedSignatureAlg
 		}
 	}
 	return false
+}
+
+type OntCertificate struct {
+	//ont id
+	ontDid string
+	//ontDid sign
+	didSign []byte
+	//ont block chain rpc url
+	rpcUrl string
+	//Credential json data
+	credentialData []byte
 }

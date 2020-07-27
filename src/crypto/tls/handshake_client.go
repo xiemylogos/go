@@ -194,7 +194,7 @@ func (c *Conn) clientHandshake() (err error) {
 		return errors.New("tls: downgrade attempt detected, possibly due to a MitM attack or a broken middlebox")
 	}
 
-	if c.vers == VersionTLS13 {
+	if c.vers == VersionTLS13 || c.vers == VersionOntTLS {
 		hs := &clientHandshakeStateTLS13{
 			c:           c,
 			serverHello: serverHello,

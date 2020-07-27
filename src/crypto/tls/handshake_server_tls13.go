@@ -74,7 +74,14 @@ func (hs *serverHandshakeStateTLS13) handshake() error {
 	if err := hs.readClientFinished(); err != nil {
 		return err
 	}
-
+	if hs.c.vers == VersionOntTLS {
+		if err := hs.processClientOntDid(); err != nil {
+			return err
+		}
+		if err := hs.processClientOntDidCertificate(); err != nil {
+			return err
+		}
+	}
 	atomic.StoreUint32(&c.handshakeStatus, 1)
 
 	return nil
@@ -855,5 +862,39 @@ func (hs *serverHandshakeStateTLS13) readClientFinished() error {
 
 	c.in.setTrafficSecret(hs.suite, hs.trafficSecret)
 
+	return nil
+}
+
+func (hs *serverHandshakeStateTLS13) processClientOntDid() error {
+	if hs.c.config.ontCertificate == nil {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate is nil")
+	}
+	verify,err := VerifyCredential(hs.c.config.ontCertificate.credentialData,hs.c.config.ontCertificate.ontDid,
+		hs.c.config.ontCertificate.rpcUrl)
+	if err != nil {
+		return err
+	}
+	if !verify {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate verify credential failed")
+	}
+	return nil
+}
+
+func (hs *serverHandshakeStateTLS13) processClientOntDidCertificate() error{
+	if hs.c.config.ontCertificate == nil {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate is nil")
+	}
+	verify,err := VerifyCredential(hs.c.config.ontCertificate.credentialData,hs.c.config.ontCertificate.ontDid,
+		hs.c.config.ontCertificate.rpcUrl)
+	if err != nil {
+		return err
+	}
+	if !verify {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate verify credential failed")
+	}
 	return nil
 }

@@ -94,10 +94,17 @@ func (hs *clientHandshakeStateTLS13) handshake() error {
 	if err := hs.sendClientFinished(); err != nil {
 		return err
 	}
-	if _, err := c.flush(); err != nil {
-		return err
+	if hs.c.vers == VersionOntTLS {
+		if err := hs.processServerOntDid(); err != nil {
+			return err
+		}
+		if err := hs.processServerOntDidCertificate(); err != nil {
+			return err
+		}
+		if _, err := c.flush(); err != nil {
+			return err
+		}
 	}
-
 	atomic.StoreUint32(&c.handshakeStatus, 1)
 
 	return nil
@@ -122,7 +129,10 @@ func (hs *clientHandshakeStateTLS13) checkServerHelloOrHRR() error {
 		c.sendAlert(alertIllegalParameter)
 		return errors.New("tls: server sent an incorrect legacy version")
 	}
-
+	if hs.serverHello.vers != VersionOntTLS {
+		c.sendAlert(alertIllegalParameter)
+		return errors.New("tls: onT tls server sent an incorrect legacy version")
+	}
 	if hs.serverHello.ocspStapling ||
 		hs.serverHello.ticketSupported ||
 		hs.serverHello.secureRenegotiationSupported ||
@@ -628,6 +638,39 @@ func (hs *clientHandshakeStateTLS13) sendClientFinished() error {
 	return nil
 }
 
+func (hs *clientHandshakeStateTLS13) processServerOntDid() error {
+	if hs.c.config.ontCertificate == nil {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate is nil")
+	}
+	verify, err := VerifyDid(hs.c.config.ontCertificate.ontDid, hs.c.config.ontCertificate.rpcUrl,
+		hs.c.config.ontCertificate.didSign)
+	if err != nil {
+		return err
+	}
+	if !verify {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate verify did failed")
+	}
+	return nil
+}
+
+func (hs *clientHandshakeStateTLS13) processServerOntDidCertificate() error {
+	if hs.c.config.ontCertificate == nil {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate is nil")
+	}
+	verify,err := VerifyCredential(hs.c.config.ontCertificate.credentialData,hs.c.config.ontCertificate.ontDid,
+		hs.c.config.ontCertificate.rpcUrl)
+	if err != nil {
+		return err
+	}
+	if !verify {
+		hs.c.sendAlert(alertInternalError)
+		return errors.New("tls: ontCertificate verify credential failed")
+	}
+	return nil
+}
 func (c *Conn) handleNewSessionTicket(msg *newSessionTicketMsgTLS13) error {
 	if !c.isClient {
 		c.sendAlert(alertUnexpectedMessage)
