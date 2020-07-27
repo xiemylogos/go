@@ -73,6 +73,8 @@ func _() {
 	_ = x[CurveP384-24]
 	_ = x[CurveP521-25]
 	_ = x[X25519-29]
+	_ = x[CurveP256k1-22]
+	_ = x[SM2-8745]
 }
 
 const (
