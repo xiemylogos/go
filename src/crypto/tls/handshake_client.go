@@ -116,7 +116,7 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, ecdheParameters, error) {
 	}
 
 	var params ecdheParameters
-	if hello.supportedVersions[0] == VersionTLS13 {
+	if hello.supportedVersions[0] == VersionTLS13 || hello.supportedVersions[0] == VersionOntTLS{
 		hello.cipherSuites = append(hello.cipherSuites, defaultCipherSuitesTLS13()...)
 
 		curveID := config.curvePreferences()[0]
@@ -237,7 +237,7 @@ func (c *Conn) loadSession(hello *clientHelloMsg) (cacheKey string,
 
 	hello.ticketSupported = true
 
-	if hello.supportedVersions[0] == VersionTLS13 {
+	if hello.supportedVersions[0] == VersionTLS13 || hello.supportedVersions[0] == VersionOntTLS {
 		// Require DHE on resumption as it guarantees forward secrecy against
 		// compromise of the session ticket key. See RFC 8446, Section 4.2.9.
 		hello.pskModes = []uint8{pskModeDHE}
